@@ -1,5 +1,5 @@
 # T6Injector
-Command line utility for compiling and injecting T6 GSC scripts.
+Command line utility for compiling and injecting T6 GSC scripts. It's currently in an early state.
 
 ## Purpose
 I've found tools like Target Manager, Control Console API, and GSC Studio are becoming
@@ -15,4 +15,4 @@ T6Injector is slow since it uses a separate process to check the syntax of every
 in a project. There will be a rewrite to make this process asynchronous in the future.
 
 I've yet to implement the actual injection part of the project as I currently
-have no PS3 to test on.
+have no PS3 to test on. I had a build of a C# MAPI library but it's back home with my console right now.
