@@ -398,4 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 # Prevent distributing gsc-tool
-Tests/gsc-tool
+Tests/gsc-tool/*
