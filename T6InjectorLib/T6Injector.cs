@@ -117,7 +117,7 @@ namespace T6InjectorLib
             File.WriteAllText(precompilePath, precompileContents);
 
             // Get gsc-tool compile arguments 
-            string arguments = GetCompileArguments(precompilePath);
+            string arguments = $"-m comp -g t6 -s ps3 {precompilePath}";
 
             // Create gsc-tool start info 
             string gscToolPath = Path.Combine(gscToolDirectory, "gsc-tool.exe");
@@ -212,12 +212,6 @@ namespace T6InjectorLib
             // Return result 
             SyntaxResult result = new SyntaxResult(filePath, hasError, errorMessage);
             return result;
-        }
-
-        private string GetCompileArguments(string filePath)
-        {
-            string arguments = $"-m comp -g t6 -s ps3 {filePath}";
-            return arguments;
         }
     }
 }
