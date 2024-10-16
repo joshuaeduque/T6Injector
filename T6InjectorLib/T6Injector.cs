@@ -1,6 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace T6InjectorLib
