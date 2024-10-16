@@ -6,45 +6,16 @@ namespace T6InjectorLib
 {
     public class T6Injector
     {
-        private string? gscToolPath;
         private string? gscToolDirectory;
-
-        public string? GscToolPath
-        {
-            get { return gscToolPath; }
-        }
 
         public string? GscToolDirectory
         {
             get { return gscToolDirectory; }
         }
 
-        public T6Injector()
+        public T6Injector(string gscToolDirectory)
         {
-            // TODO 
-        }
-
-        public void SetGscToolPath(string gscToolPath)
-        {
-            // Check gsc tool path argument 
-            if(string.IsNullOrEmpty(gscToolPath))
-                throw new ArgumentException("GSC tool path cannot be null or empty", nameof(gscToolPath));
-
-            // Check if gsc tool exists at given path 
-            if (!File.Exists(gscToolPath))
-                throw new IOException("GSC tool does not exist at path");
-
-            // Check if gsc tool path has a root directory.
-            // We need both the path to the gsc tool executable and its root directory.
-            // If the given gsc tool path IS the root directory, that's a problem.
-            DirectoryInfo? gscToolInfo = Directory.GetParent(gscToolPath);
-            if (gscToolInfo == null)
-                throw new ArgumentException("GSC tool path is a root directory, not a file", nameof(gscToolPath));
-
-            // Set gsc tool root 
-            this.gscToolDirectory = gscToolInfo.FullName;
-            // Set gsc tool path 
-            this.gscToolPath = gscToolPath;
+            this.gscToolDirectory = gscToolDirectory;
         }
 
         public string[] GetProjectFiles(string projectDirectory)
@@ -78,10 +49,6 @@ namespace T6InjectorLib
 
         public SyntaxResult[] CheckProjectSyntax(string[] projectFiles)
         {
-            // Check gsc-tool path 
-            if (string.IsNullOrEmpty(gscToolPath))
-                throw new GscToolPathException();
-
             // Check gsc-tool directory 
             if (string.IsNullOrEmpty(gscToolDirectory))
                 throw new GscToolDirectoryException();
@@ -107,10 +74,7 @@ namespace T6InjectorLib
 
         public byte[] CompileProject(string[] projectFiles)
         {
-            // Check gsc tool path and directory 
-            if (string.IsNullOrEmpty(gscToolPath))
-                throw new InvalidOperationException("GSC tool path is null or empty");
-
+            // Check gsc-tool directory 
             if (string.IsNullOrEmpty(gscToolDirectory))
                 throw new InvalidOperationException("GSC tool root directory is null or empty");
 
@@ -150,6 +114,7 @@ namespace T6InjectorLib
             string arguments = GetCompileArguments(precompilePath);
 
             // Create gsc-tool start info 
+            string gscToolPath = Path.Combine(gscToolDirectory, "gsc-tool.exe");
             ProcessStartInfo startInfo = new ProcessStartInfo(gscToolPath, arguments)
             {
                 RedirectStandardError = true,
@@ -193,9 +158,6 @@ namespace T6InjectorLib
 
         private SyntaxResult CheckScriptSyntax(string filePath)
         {
-            // Check gsc-tool path  
-            if (string.IsNullOrEmpty(gscToolPath))
-                throw new GscToolPathException();
             // Check gsc-tool directory 
             if (string.IsNullOrEmpty(gscToolDirectory))
                 throw new GscToolDirectoryException();
@@ -212,6 +174,7 @@ namespace T6InjectorLib
             string arguments = $"-m parse -g t6 -s ps3 {filePath}";
 
             // Create start info 
+            string gscToolPath = Path.Combine(gscToolDirectory, "gsc-tool.exe");
             ProcessStartInfo startInfo = new ProcessStartInfo(gscToolPath, arguments)
             {
                 CreateNoWindow = true,

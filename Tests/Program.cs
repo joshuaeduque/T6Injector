@@ -29,13 +29,10 @@ namespace Tests
             string testProjectName = "test_project";
             string testsDirectory = GetTestsDirectory(TESTS_PROJECT_NAME);
             string testProjectDir = Path.Combine(testsDirectory, testProjectName);
-            string gscToolPath = Path.Combine(testsDirectory, "gsc-tool", "gsc-tool.exe");
+            string gscToolDirectory = Path.Combine(testsDirectory, "gsc-tool");
 
             // Create injector 
-            T6Injector injector = new T6Injector();
-
-            // Set gsc-tool  
-            injector.SetGscToolPath(gscToolPath);
+            T6Injector injector = new T6Injector(gscToolDirectory);
 
             // Get project files 
             string[] projectFiles = injector.GetProjectFiles(testProjectDir);
