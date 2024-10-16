@@ -7,9 +7,9 @@ namespace T6InjectorLib
 {
     public class T6Injector
     {
-        private string? gscToolDirectory;
+        private string gscToolDirectory;
 
-        public string? GscToolDirectory
+        public string GscToolDirectory
         {
             get { return gscToolDirectory; }
         }
@@ -63,10 +63,6 @@ namespace T6InjectorLib
 
         public SyntaxResult[] CheckProjectSyntax(string[] projectFiles)
         {
-            // Check gsc-tool directory 
-            if (string.IsNullOrEmpty(gscToolDirectory))
-                throw new GscToolDirectoryException();
-
             // Check if project files is null 
             if (projectFiles == null)
                 throw new ArgumentNullException(nameof(projectFiles), "Project files cannot be null");
@@ -88,10 +84,6 @@ namespace T6InjectorLib
 
         public byte[] CompileProject(string[] projectFiles)
         {
-            // Check gsc-tool directory 
-            if (string.IsNullOrEmpty(gscToolDirectory))
-                throw new InvalidOperationException("GSC tool root directory is null or empty");
-
             // Check if project files is null 
             if (projectFiles == null)
                 throw new ArgumentNullException(nameof(projectFiles), "Project filles cannot be null");
@@ -172,10 +164,6 @@ namespace T6InjectorLib
 
         private SyntaxResult CheckScriptSyntax(string filePath)
         {
-            // Check gsc-tool directory 
-            if (string.IsNullOrEmpty(gscToolDirectory))
-                throw new GscToolDirectoryException();
-
             // Check filePath argument 
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentException("Filepath cannot be null or empty", nameof(filePath));
