@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
@@ -15,6 +16,19 @@ namespace T6InjectorLib
 
         public T6Injector(string gscToolDirectory)
         {
+            // Check argument valid 
+            if(string.IsNullOrEmpty(gscToolDirectory))
+                throw new ArgumentException("gsc-tool directory cannot be null or empty", nameof(gscToolDirectory));
+
+            // Check if gsc-tool directory exists
+            if (!Directory.Exists(gscToolDirectory))
+                throw new IOException("gsc-tool directory does not exist");
+
+            // Check if gsc-tool.exe exists in gsc-tool directory 
+            string gscToolPath = Path.Combine(gscToolDirectory, "gsc-tool.exe");
+            if (!File.Exists(gscToolPath))
+                throw new IOException($"gsc-tool.exe does not exist at {gscToolPath}");
+
             this.gscToolDirectory = gscToolDirectory;
         }
 
