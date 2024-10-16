@@ -6,16 +6,8 @@ namespace T6InjectorLib
 {
     public class T6Injector
     {
-        public enum System
-        {
-            PC,
-            PS3,
-            XBOX
-        }
-
         private string? gscToolPath;
         private string? gscToolDirectory;
-        private readonly System targetSystem;
 
         public string? GscToolPath
         {
@@ -27,14 +19,9 @@ namespace T6InjectorLib
             get { return gscToolDirectory; }
         }
 
-        public System TargetSystem
+        public T6Injector()
         {
-            get { return targetSystem; }
-        }
-
-        public T6Injector(System targetPlatform)
-        {
-            this.targetSystem = targetPlatform;
+            // TODO 
         }
 
         public void SetGscToolPath(string gscToolPath)
@@ -264,34 +251,8 @@ namespace T6InjectorLib
 
         private string GetCompileArguments(string filePath)
         {
-            StringBuilder arguments = new StringBuilder();
-
-            // Set mode 
-            arguments.Append("-m comp ");
-
-            // Set game 
-            arguments.Append("-g t6 ");
-
-            // Set target system  
-            switch (targetSystem)
-            {
-                case System.PS3:
-                    arguments.Append("-s ps3 ");
-                    break;
-                case System.XBOX:
-                    arguments.Append("-s xb2 ");
-                    break;
-                case System.PC:
-                    arguments.Append("-s pc ");
-                    break;
-                default:
-                    throw new InvalidOperationException("Target system not set");
-            }
-
-            // Set file path 
-            arguments.Append(filePath);
-
-            return arguments.ToString();
+            string arguments = $"-m comp -g t6 -s ps3 {filePath}";
+            return arguments;
         }
     }
 }

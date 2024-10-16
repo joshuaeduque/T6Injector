@@ -32,7 +32,7 @@ namespace Tests
             string gscToolPath = Path.Combine(testsDirectory, "gsc-tool", "gsc-tool.exe");
 
             // Create injector 
-            T6Injector injector = new T6Injector(T6Injector.System.PS3);
+            T6Injector injector = new T6Injector();
 
             // Set gsc-tool  
             injector.SetGscToolPath(gscToolPath);
