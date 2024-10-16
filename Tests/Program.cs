@@ -8,10 +8,17 @@ namespace Tests
         static int Main(string[] args)
         {
             Console.WriteLine("RUNNING GENERAL USE TEST");
-            if(GeneralUseTest() > 0)
+            if(!GeneralUseTest())
             {
                 Console.WriteLine("[FAIL] GENERAL USE TEST FAILED");
                 return -1;
+            }
+
+            Console.WriteLine("RUNNING SYNTAX ERROR TEST");
+            if(!SyntaxErrorTest())
+            {
+                Console.WriteLine("[FAIL] SYNTAX ERROR TEST FAILED");
+                return -2;
             }
 
             Console.WriteLine("ALL TESTS PASSED");
@@ -19,12 +26,13 @@ namespace Tests
             return 0;
         }
 
-        static int GeneralUseTest()
+        static bool GeneralUseTest()
         {
             string testsDir = GetTestsDirectory();
             string gscToolDir = Path.Combine(testsDir, "gsc-tool");
             string projectDir = Path.Combine(testsDir, "general_project");
 
+            // Create injector 
             T6Injector injector = new T6Injector(gscToolDir);
 
             // Get project files 
@@ -32,7 +40,7 @@ namespace Tests
             if(projectFiles.Length < 2)
             {
                 Console.WriteLine($"EXPECTED TWO FILES, GOT {projectFiles.Length}");
-                return -1;
+                return false;
             }
 
             // Check for main.gsc 
@@ -40,7 +48,7 @@ namespace Tests
             if(!projectHasMain)
             {
                 Console.WriteLine($"EXPECTED main.gsc IN PROJECT ROOT");
-                return -2;
+                return false;
             }
 
             // Check syntax of files 
@@ -50,7 +58,7 @@ namespace Tests
                 if(result.HasError)
                 {
                     Console.WriteLine($"EXPECTED NO ERRORS, GOT ERROR IN {result.FilePath}");
-                    return -3;
+                    return false;
                 }
             }
 
@@ -59,10 +67,44 @@ namespace Tests
             if(compiledProject.Length < 1)
             {
                 Console.WriteLine("EXPECTED PROJECT TO COMPILE");
-                return -4;
+                return false;
             }
             
-            return 0;
+            return true;
+        }
+
+        static bool SyntaxErrorTest()
+        {
+            string testsDir = GetTestsDirectory();
+            string gscToolDir = Path.Combine(testsDir, "gsc-tool");
+            string projectDir = Path.Combine(testsDir, "syntax_project");
+
+            // Create injector 
+            T6Injector injector = new T6Injector(gscToolDir);
+
+            // Get project files 
+            string[] projectFiles = injector.GetProjectFiles(projectDir);
+
+            // Check project syntax 
+            SyntaxResult[] syntaxResults = injector.CheckProjectSyntax(projectFiles);
+            bool errorFound = false;
+            foreach(var result in syntaxResults)
+            {
+                if (result.HasError)
+                {
+                    errorFound = true;
+                    break;
+                }
+            }
+
+            // Check for expected error in error.gsc 
+            if(!errorFound)
+            {
+                Console.WriteLine("EXPECTED TO FIND ERROR IN error.gsc");
+                return false;
+            }
+            
+            return true;
         }
 
         static string GetTestsDirectory()

@@ -135,7 +135,6 @@ namespace T6InjectorLib
                     if (string.IsNullOrEmpty(e.Data))
                         return;
                     errorCompiling = true;
-                    Console.WriteLine(e.Data);
                 };
 
                 bool started = process.Start();
@@ -195,7 +194,6 @@ namespace T6InjectorLib
                     // Syntax error occurred 
                     hasError = true;
                     errorMessage = e.Data;
-                    Console.WriteLine(e.Data);
                 };
 
                 bool started = process.Start();
