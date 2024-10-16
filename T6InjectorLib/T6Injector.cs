@@ -5,7 +5,7 @@ namespace T6InjectorLib
 {
     public class T6Injector
     {
-        private string gscToolDirectory;
+        private readonly string gscToolDirectory;
 
         public string GscToolDirectory
         {
