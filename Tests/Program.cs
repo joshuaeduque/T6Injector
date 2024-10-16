@@ -5,16 +5,12 @@ namespace Tests
 {
     internal class Program
     {
-        const string PROJECT_NAME = "T6Injector";
-        const string TESTS_PROJECT_NAME = "Tests";
-        const string DEBUG_OR_RELEASE = "Debug";
-        const string DOT_NET_VERSION = "net8.0";
-
         static int Main(string[] args)
         {
-            if(!GeneralUseTest())
+            Console.WriteLine("RUNNING GENERAL USE TEST");
+            if(GeneralUseTest() > 0)
             {
-                Console.WriteLine("GENERAL USE TEST FAILED");
+                Console.WriteLine("[FAIL] GENERAL USE TEST FAILED");
                 return -1;
             }
 
@@ -23,96 +19,58 @@ namespace Tests
             return 0;
         }
 
-        static bool GeneralUseTest()
+        static int GeneralUseTest()
         {
-            // Get test project directory 
-            string testProjectName = "test_project";
-            string testsDirectory = GetTestsDirectory(TESTS_PROJECT_NAME);
-            string testProjectDir = Path.Combine(testsDirectory, testProjectName);
-            string gscToolDirectory = Path.Combine(testsDirectory, "gsc-tool");
+            string testsDir = GetTestsDirectory();
+            string gscToolDir = Path.Combine(testsDir, "gsc-tool");
+            string projectDir = Path.Combine(testsDir, "general_project");
 
-            // Create injector 
-            T6Injector injector = new T6Injector(gscToolDirectory);
+            T6Injector injector = new T6Injector(gscToolDir);
 
             // Get project files 
-            string[] projectFiles = injector.GetProjectFiles(testProjectDir);
-            if (projectFiles.Length < 1)
+            string[] projectFiles = injector.GetProjectFiles(projectDir);
+            if(projectFiles.Length < 2)
             {
-                Console.WriteLine("Incorrect project files length");
-                return false;
+                Console.WriteLine($"EXPECTED TWO FILES, GOT {projectFiles.Length}");
+                return -1;
             }
 
-            // Check for main script 
-            bool hasMainScript = injector.ProjectHasMainScript(testProjectDir);
-            if (!hasMainScript)
+            // Check for main.gsc 
+            bool projectHasMain = injector.ProjectHasMainScript(projectDir);
+            if(!projectHasMain)
             {
-                Console.WriteLine("Incoreectly reported missing main script");
-                return false;
+                Console.WriteLine($"EXPECTED main.gsc IN PROJECT ROOT");
+                return -2;
             }
 
-            // Check project syntax 
+            // Check syntax of files 
             SyntaxResult[] syntaxResults = injector.CheckProjectSyntax(projectFiles);
-            bool errorFound = false;
             foreach(var result in syntaxResults)
             {
                 if(result.HasError)
                 {
-                    errorFound = true;
-                    break;
+                    Console.WriteLine($"EXPECTED NO ERRORS, GOT ERROR IN {result.FilePath}");
+                    return -3;
                 }
             }
 
-            if(!errorFound)
+            // Compile project 
+            byte[] compiledProject = injector.CompileProject(projectFiles);
+            if(compiledProject.Length < 1)
             {
-                Console.WriteLine("Incorrectly reported no syntax errors");
-                return false;
+                Console.WriteLine("EXPECTED PROJECT TO COMPILE");
+                return -4;
             }
-
-            // Get project scripts without errors 
-            string[] compileScripts = syntaxResults.Where(result => !result.HasError).Select(result => result.FilePath).ToArray();
-            byte[] compiledScript = injector.CompileProject(compileScripts);
-
-            if(compileScripts.Length < 1)
-            {
-                Console.WriteLine("Incorrectly reported no compiled bytes");
-                return false;
-            }
-
-            return true;
+            
+            return 0;
         }
 
-        static string GetSolutionDirectory()
+        static string GetTestsDirectory()
         {
-            // Get the directory of the test being executed 
-            // For ex C:\Projects\T6Injector\Tests\bin\{debugOrRelease}\{dotNetVersion}\
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string projectDir = Path.GetFullPath(Path.Combine(baseDir, @"..\..\.."));
 
-            // Move up the base path
-            // For ex move from C:\Projects\T6Injector\Tests\bin\{debugOrRelease}\{dotNetVersion}\
-            // to C:\Projects\T6Injector
-            string? solutionDirectory = (Directory.GetParent(baseDirectory)?.Parent?.Parent?.Parent?.Parent?.FullName) ?? throw new NullReferenceException();
-
-            return solutionDirectory;
-        }
-
-        static string GetTestsDirectory(string testsProjectName)
-        {
-            // Get solution directory 
-            string solutionDirectory = GetSolutionDirectory();
-            // Get tests directory 
-            string testsDirectory = Path.Combine(solutionDirectory, testsProjectName);
-
-            return testsDirectory;
-        }
-
-        static string GetInjectorDirectory(string projectName, string debugOrRelease, string dotNetVersion)
-        {
-            // Get solution directory 
-            string solutionDirectory = GetSolutionDirectory();
-            // Get injector directory 
-            string injectorDirectory = Path.Combine(solutionDirectory, projectName, "bin", debugOrRelease, dotNetVersion);
-
-            return injectorDirectory;
+            return projectDir;
         }
     }
 }
