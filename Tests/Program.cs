@@ -109,7 +109,9 @@ namespace Tests
 
         static string GetTestsDirectory()
         {
+            // Navigate to something like ...\T6Injector\Tests\bin\Debug\net8.0\
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            // To ...\T6Injector\Tests
             string projectDir = Path.GetFullPath(Path.Combine(baseDir, @"..\..\.."));
 
             return projectDir;
