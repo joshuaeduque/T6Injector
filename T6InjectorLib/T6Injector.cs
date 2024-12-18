@@ -1,63 +1,33 @@
 ﻿using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace T6InjectorLib
 {
     public class T6Injector
     {
-        public enum System
-        {
-            PC,
-            PS3,
-            XBOX
-        }
+        private readonly string gscToolDirectory;
 
-        private string? gscToolPath;
-        private string? gscToolDirectory;
-        private readonly System targetSystem;
-
-        public string? GscToolPath
-        {
-            get { return gscToolPath; }
-        }
-
-        public string? GscToolDirectory
+        public string GscToolDirectory
         {
             get { return gscToolDirectory; }
         }
 
-        public System TargetSystem
+        public T6Injector(string gscToolDirectory)
         {
-            get { return targetSystem; }
-        }
+            // Check argument valid 
+            if (string.IsNullOrEmpty(gscToolDirectory))
+                throw new ArgumentException("gsc-tool directory cannot be null or empty", nameof(gscToolDirectory));
 
-        public T6Injector(System targetPlatform)
-        {
-            this.targetSystem = targetPlatform;
-        }
+            // Check if gsc-tool directory exists
+            if (!Directory.Exists(gscToolDirectory))
+                throw new IOException("gsc-tool directory does not exist");
 
-        public void SetGscToolPath(string gscToolPath)
-        {
-            // Check gsc tool path argument 
-            if(string.IsNullOrEmpty(gscToolPath))
-                throw new ArgumentException("GSC tool path cannot be null or empty", nameof(gscToolPath));
-
-            // Check if gsc tool exists at given path 
+            // Check if gsc-tool.exe exists in gsc-tool directory 
+            string gscToolPath = Path.Combine(gscToolDirectory, "gsc-tool.exe");
             if (!File.Exists(gscToolPath))
-                throw new IOException("GSC tool does not exist at path");
+                throw new IOException($"gsc-tool.exe does not exist at {gscToolPath}");
 
-            // Check if gsc tool path has a root directory.
-            // We need both the path to the gsc tool executable and its root directory.
-            // If the given gsc tool path IS the root directory, that's a problem.
-            DirectoryInfo? gscToolInfo = Directory.GetParent(gscToolPath);
-            if (gscToolInfo == null)
-                throw new ArgumentException("GSC tool path is a root directory, not a file", nameof(gscToolPath));
-
-            // Set gsc tool root 
-            this.gscToolDirectory = gscToolInfo.FullName;
-            // Set gsc tool path 
-            this.gscToolPath = gscToolPath;
+            this.gscToolDirectory = gscToolDirectory;
         }
 
         public string[] GetProjectFiles(string projectDirectory)
@@ -76,7 +46,7 @@ namespace T6InjectorLib
                 string[] projectFiles = Directory.GetFiles(projectDirectory, "*.gsc", SearchOption.AllDirectories);
                 return projectFiles;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new IOException("Failed to get project files", ex);
             }
@@ -91,79 +61,27 @@ namespace T6InjectorLib
 
         public SyntaxResult[] CheckProjectSyntax(string[] projectFiles)
         {
-            // Check gsc tool path and directory 
-            if (string.IsNullOrEmpty(gscToolPath))
-                throw new InvalidOperationException("GSC tool path is null or empty");
-
-            if (string.IsNullOrEmpty(gscToolDirectory))
-                throw new InvalidOperationException("GSC tool root directory is null or empty");
-
             // Check if project files is null 
             if (projectFiles == null)
-                throw new ArgumentNullException(nameof(projectFiles), "Project filles cannot be null");
+                throw new ArgumentNullException(nameof(projectFiles), "Project files cannot be null");
 
             // Check if project files is empty 
-            if(projectFiles.Length == 0)
+            if (projectFiles.Length == 0)
                 throw new ArgumentException("Project files cannot be empty", nameof(projectFiles));
 
-            List<SyntaxResult> results = new List<SyntaxResult>();
-
             // Check syntax of each file 
-            foreach(string file in projectFiles)
+            List<SyntaxResult> results = new List<SyntaxResult>();
+            Task.WaitAll(Array.ConvertAll(projectFiles, file => Task.Run(() =>
             {
-                // Create process start info 
-                string gscToolArguments = GetParseArguments(file);
-                ProcessStartInfo startInfo = new ProcessStartInfo(gscToolPath, gscToolArguments)
-                {
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true
-                };
-
-                string filePath = file;
-                bool hasError = false;
-                string? errorMessage = null;
-
-                // Start process 
-                using (Process process = new Process())
-                {
-                    process.StartInfo = startInfo;
-
-                    process.ErrorDataReceived += (sender, e) => {
-                        if (string.IsNullOrEmpty(e.Data))
-                            return;
-
-                        if(e.Data.StartsWith("[ERROR]"))
-                        {
-                            hasError = true;
-                            errorMessage = e.Data;
-                        }
-                    };
-
-                    bool started = process.Start();
-                    if (!started)
-                        throw new IOException("Failed to start gsc-tool process");
-
-                    process.BeginErrorReadLine();
-                    process.WaitForExit();
-                    process.Close();
-                }
-
-                results.Add(new SyntaxResult(filePath, hasError, errorMessage));
-            }
+                SyntaxResult result = CheckScriptSyntax(file);
+                results.Add(result);
+            })));
 
             return results.ToArray();
         }
 
         public byte[] CompileProject(string[] projectFiles)
         {
-            // Check gsc tool path and directory 
-            if (string.IsNullOrEmpty(gscToolPath))
-                throw new InvalidOperationException("GSC tool path is null or empty");
-
-            if (string.IsNullOrEmpty(gscToolDirectory))
-                throw new InvalidOperationException("GSC tool root directory is null or empty");
-
             // Check if project files is null 
             if (projectFiles == null)
                 throw new ArgumentNullException(nameof(projectFiles), "Project filles cannot be null");
@@ -174,7 +92,7 @@ namespace T6InjectorLib
 
             // Create contents to compile 
             StringBuilder sb = new StringBuilder();
-            foreach(var file in projectFiles)
+            foreach (var file in projectFiles)
             {
                 string text = File.ReadAllText(file);
                 sb.Append(text + "\n");
@@ -197,9 +115,10 @@ namespace T6InjectorLib
             File.WriteAllText(precompilePath, precompileContents);
 
             // Get gsc-tool compile arguments 
-            string arguments = GetCompileArguments(precompilePath);
+            string arguments = $"-m comp -g t6 -s ps3 {precompilePath}";
 
             // Create gsc-tool start info 
+            string gscToolPath = Path.Combine(gscToolDirectory, "gsc-tool.exe");
             ProcessStartInfo startInfo = new ProcessStartInfo(gscToolPath, arguments)
             {
                 RedirectStandardError = true,
@@ -212,11 +131,11 @@ namespace T6InjectorLib
             using (Process process = new Process())
             {
                 process.StartInfo = startInfo;
-                process.ErrorDataReceived += (sender, e) => {
+                process.ErrorDataReceived += (sender, e) =>
+                {
                     if (string.IsNullOrEmpty(e.Data))
                         return;
                     errorCompiling = true;
-                    Console.WriteLine(e.Data);
                 };
 
                 bool started = process.Start();
@@ -241,80 +160,56 @@ namespace T6InjectorLib
             return compiledScript;
         }
 
-        private string GetCompileArguments(string filePath)
+        private SyntaxResult CheckScriptSyntax(string filePath)
         {
-            StringBuilder arguments = new StringBuilder();
+            // Check filePath argument 
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("Filepath cannot be null or empty", nameof(filePath));
 
-            // Set mode 
-            arguments.Append("-m comp ");
-
-            // Set game 
-            arguments.Append("-g t6 ");
-
-            // Set target system  
-            switch (targetSystem)
-            {
-                case System.PS3:
-                    arguments.Append("-s ps3 ");
-                    break;
-                case System.XBOX:
-                    arguments.Append("-s xb2 ");
-                    break;
-                case System.PC:
-                    arguments.Append("-s pc ");
-                    break;
-                default:
-                    throw new InvalidOperationException("Target system not set");
-            }
-
-            // Set file path 
-            arguments.Append(filePath);
-
-            return arguments.ToString();
-        }
-
-        private string GetParseArguments(string filePath)
-        {
-            // Check if file path null or empty 
-            if(string.IsNullOrEmpty(filePath))
-                throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
-
-            // Check if file exists 
+            // Check if script exists 
             if (!File.Exists(filePath))
-                throw new InvalidOperationException("File does not exist at given file path");
+                throw new IOException("File does not exist at given filepath");
 
-            StringBuilder arguments = new StringBuilder();
+            // Create parse arguments 
+            string arguments = $"-m parse -g t6 -s ps3 {filePath}";
 
-            // Set mode 
-            arguments.Append("-m parse ");
-
-            // Set game 
-            arguments.Append("-g t6 ");
-
-            // Set target system  
-            switch(targetSystem)
+            // Create start info 
+            string gscToolPath = Path.Combine(gscToolDirectory, "gsc-tool.exe");
+            ProcessStartInfo startInfo = new ProcessStartInfo(gscToolPath, arguments)
             {
-                case System.PS3:
-                    arguments.Append("-s ps3 ");
-                    break;
-                case System.XBOX:
-                    arguments.Append("-s xb2 ");
-                    break;
-                case System.PC:
-                    arguments.Append("-s pc ");
-                    break;
-                default:
-                    throw new InvalidOperationException("Target system not set");
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                WorkingDirectory = gscToolDirectory,
+            };
+
+            // Start process 
+            bool hasError = false;
+            string? errorMessage = null;
+            using (Process process = new Process())
+            {
+                process.StartInfo = startInfo;
+                process.ErrorDataReceived += (sender, e) =>
+                {
+                    if (string.IsNullOrEmpty(e.Data))
+                        return;
+                    // Syntax error occurred 
+                    hasError = true;
+                    errorMessage = e.Data;
+                };
+
+                bool started = process.Start();
+                if (!started)
+                    throw new IOException("Failed to start gsc-tool process");
+
+                process.BeginErrorReadLine();
+                process.WaitForExit();
+                process.Close();
             }
 
-            // Set dry 
-            arguments.Append("-y ");
-
-            // Set file path 
-            arguments.Append(filePath);
-
-            // Return arguments string 
-            return arguments.ToString();
+            // Return result 
+            SyntaxResult result = new SyntaxResult(filePath, hasError, errorMessage);
+            return result;
         }
     }
 }

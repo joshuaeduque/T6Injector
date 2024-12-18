@@ -1,3 +1,0 @@
-some_function() {
-	// TODO 
-}
