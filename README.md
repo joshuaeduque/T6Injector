@@ -1,13 +1,13 @@
 # T6Injector
-Command line utility for compiling and injecting T6 GSC scripts. It's currently in a very early state.
+C# library and CLI for compiling / injecting T6 GSC scripts using gsc-tool. Currently in a very early state 😅.
 
-## How To Use
-Here's a simple example of compiling a project 
+## Usage Example
+Here's a simple example of compiling a project:
 ```cs
+// Get the directory containing gsc-tool.exe
+string gscToolPath = "C:/Users/Josh/gsc-tool";
 // Create an injector 
-T6Injector injector = new T6Injector(T6Injector.System.PS3);
-// Set the path to the directory including gsc-tool.exe
-injector.SetGscToolPath("C:/Users/Josh/gsc-tool");
+T6Injector injector = new T6Injector(gscToolpath);
 // Get the project files 
 string[] projectFiles = injector.GetProjectFiles("C:/Users/Josh/project_dir");
 // Compile the project files 
@@ -15,18 +15,11 @@ byte[] compiledScript = injector.CompileProject(projectFiles);
 ```
 
 ## Purpose
-I've found tools like Target Manager, Control Console API, and GSC Studio are becoming
-more difficult to reliably source as time goes on. Relying on leaked SDKs is
-cumbersome, CCAPI is no longer supported, and GSC Studio has no official
-download anymore. 
+Tools like Target Manager, Control Console API, and GSC Studio are difficult to source reliably, either relying on leaked Sony SDKs or websites that no longer exist.
 
-T6Injector is a simple tool to check the syntax of a project, compile it, and inject it into memory.
-It uses MAPI for injection which is open source and comes installed on modern CFW.
+T6Injector aims to be an open source alternative to GSC Studio that uses the MAPI communications library, an open source alternative to Target Manager and Control Console API. This means that unlike the previously mentioned software, T6Injector will always be updatable and accessible.
 
 ## Issues 
-T6Injector is slow since it uses a separate process to check the syntax of every GSC script 
-in a project. There will be a rewrite to make this process asynchronous in the future.
-
 The CLI is not implemented which seems silly but I promise I'll get to it.
 
 I've yet to implement the actual injection part of the project as I currently
