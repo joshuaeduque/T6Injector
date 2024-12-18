@@ -7,21 +7,28 @@ namespace Tests
     {
         static int Main(string[] args)
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             Console.WriteLine("RUNNING GENERAL USE TEST");
-            if(!GeneralUseTest())
+            if (!GeneralUseTest())
             {
                 Console.WriteLine("[FAIL] GENERAL USE TEST FAILED");
                 return -1;
             }
 
             Console.WriteLine("RUNNING SYNTAX ERROR TEST");
-            if(!SyntaxErrorTest())
+            if (!SyntaxErrorTest())
             {
                 Console.WriteLine("[FAIL] SYNTAX ERROR TEST FAILED");
                 return -2;
             }
 
             Console.WriteLine("ALL TESTS PASSED");
+
+            stopwatch.Stop();
+
+            Console.WriteLine("Elapsed time: " + (stopwatch.ElapsedMilliseconds).ToString() + "ms");
 
             return 0;
         }
@@ -37,7 +44,7 @@ namespace Tests
 
             // Get project files 
             string[] projectFiles = injector.GetProjectFiles(projectDir);
-            if(projectFiles.Length < 2)
+            if (projectFiles.Length < 2)
             {
                 Console.WriteLine($"EXPECTED TWO FILES, GOT {projectFiles.Length}");
                 return false;
@@ -45,7 +52,7 @@ namespace Tests
 
             // Check for main.gsc 
             bool projectHasMain = injector.ProjectHasMainScript(projectDir);
-            if(!projectHasMain)
+            if (!projectHasMain)
             {
                 Console.WriteLine($"EXPECTED main.gsc IN PROJECT ROOT");
                 return false;
@@ -53,9 +60,9 @@ namespace Tests
 
             // Check syntax of files 
             SyntaxResult[] syntaxResults = injector.CheckProjectSyntax(projectFiles);
-            foreach(var result in syntaxResults)
+            foreach (var result in syntaxResults)
             {
-                if(result.HasError)
+                if (result.HasError)
                 {
                     Console.WriteLine($"EXPECTED NO ERRORS, GOT ERROR IN {result.FilePath}");
                     return false;
@@ -64,12 +71,12 @@ namespace Tests
 
             // Compile project 
             byte[] compiledProject = injector.CompileProject(projectFiles);
-            if(compiledProject.Length < 1)
+            if (compiledProject.Length < 1)
             {
                 Console.WriteLine("EXPECTED PROJECT TO COMPILE");
                 return false;
             }
-            
+
             return true;
         }
 
@@ -88,7 +95,7 @@ namespace Tests
             // Check project syntax 
             SyntaxResult[] syntaxResults = injector.CheckProjectSyntax(projectFiles);
             bool errorFound = false;
-            foreach(var result in syntaxResults)
+            foreach (var result in syntaxResults)
             {
                 if (result.HasError)
                 {
@@ -98,12 +105,12 @@ namespace Tests
             }
 
             // Check for expected error in error.gsc 
-            if(!errorFound)
+            if (!errorFound)
             {
                 Console.WriteLine("EXPECTED TO FIND ERROR IN error.gsc");
                 return false;
             }
-            
+
             return true;
         }
 

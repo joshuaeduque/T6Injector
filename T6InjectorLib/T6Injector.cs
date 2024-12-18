@@ -15,7 +15,7 @@ namespace T6InjectorLib
         public T6Injector(string gscToolDirectory)
         {
             // Check argument valid 
-            if(string.IsNullOrEmpty(gscToolDirectory))
+            if (string.IsNullOrEmpty(gscToolDirectory))
                 throw new ArgumentException("gsc-tool directory cannot be null or empty", nameof(gscToolDirectory));
 
             // Check if gsc-tool directory exists
@@ -46,7 +46,7 @@ namespace T6InjectorLib
                 string[] projectFiles = Directory.GetFiles(projectDirectory, "*.gsc", SearchOption.AllDirectories);
                 return projectFiles;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new IOException("Failed to get project files", ex);
             }
@@ -66,16 +66,16 @@ namespace T6InjectorLib
                 throw new ArgumentNullException(nameof(projectFiles), "Project files cannot be null");
 
             // Check if project files is empty 
-            if(projectFiles.Length == 0)
+            if (projectFiles.Length == 0)
                 throw new ArgumentException("Project files cannot be empty", nameof(projectFiles));
 
             // Check syntax of each file 
             List<SyntaxResult> results = new List<SyntaxResult>();
-            foreach (string file in projectFiles)
+            Task.WaitAll(Array.ConvertAll(projectFiles, file => Task.Run(() =>
             {
                 SyntaxResult result = CheckScriptSyntax(file);
                 results.Add(result);
-            }
+            })));
 
             return results.ToArray();
         }
@@ -92,7 +92,7 @@ namespace T6InjectorLib
 
             // Create contents to compile 
             StringBuilder sb = new StringBuilder();
-            foreach(var file in projectFiles)
+            foreach (var file in projectFiles)
             {
                 string text = File.ReadAllText(file);
                 sb.Append(text + "\n");
@@ -131,7 +131,8 @@ namespace T6InjectorLib
             using (Process process = new Process())
             {
                 process.StartInfo = startInfo;
-                process.ErrorDataReceived += (sender, e) => {
+                process.ErrorDataReceived += (sender, e) =>
+                {
                     if (string.IsNullOrEmpty(e.Data))
                         return;
                     errorCompiling = true;
@@ -188,7 +189,8 @@ namespace T6InjectorLib
             using (Process process = new Process())
             {
                 process.StartInfo = startInfo;
-                process.ErrorDataReceived += (sender, e) => {
+                process.ErrorDataReceived += (sender, e) =>
+                {
                     if (string.IsNullOrEmpty(e.Data))
                         return;
                     // Syntax error occurred 
